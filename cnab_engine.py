@@ -5,7 +5,10 @@ Módulo responsável pela lógica de geração de arquivos CNAB
 import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Optional
-from utils import format_text, format_number, format_date, format_money
+from utils import (
+    format_text, format_number, format_date, format_money,
+    formatar_texto, formatar_numero, formatar_data, formatar_dinheiro
+)
 
 
 class CNABGenerator:
@@ -403,4 +406,325 @@ class CNABEngine(CNABGenerator):
     Alias para CNABGenerator (compatibilidade retroativa)
     """
     pass
+
+
+# =============================================================================
+# CLASSE EM PORTUGUÊS - GeradorCNAB
+# =============================================================================
+
+class GeradorCNAB:
+    """
+    Classe para geração de arquivos CNAB 444 caracteres (versão em português)
+    Baseada no layout CNAB 444 posições e arquivo de exemplo
+    """
+    
+    def __init__(self):
+        """
+        Inicializa o gerador CNAB
+        """
+        self.tamanho_registro = 444
+        self.dados = None
+    
+    def gerar_header(self, nome_originador: str, cod_originador: str, 
+                     seq_arquivo: int) -> str:
+        """
+        Gera o registro header (Tipo 0) do arquivo CNAB 444 posições
+        
+        Args:
+            nome_originador: Nome do originador/empresa
+            cod_originador: Código do originador
+            seq_arquivo: Número sequencial do arquivo
+            
+        Returns:
+            String com 444 caracteres do header
+            
+        Layout CNAB 444:
+            001-001: '0' (Tipo Registro Header)
+            002-002: '1' (Tipo Arquivo - Remessa)
+            003-009: 'REMESSA' (7 pos)
+            010-011: '01' (Código Serviço)
+            012-026: 'COBRANCA' (15 pos com espaços)
+            027-046: Código Originador (20 pos numérico)
+            047-076: Nome Originador (30 pos texto)
+            077-079: '611' (Código Banco Paulista)
+            080-094: 'PAULISTA S.A.' (15 pos)
+            095-100: Data Gravação DDMMAA (6 pos)
+            101-108: Brancos (8 pos)
+            109-110: 'MX' (2 pos)
+            111-117: Sequencial Arquivo (7 pos numérico)
+            118-438: Brancos (321 pos)
+            439-444: '000001' (Sequencial Registro - sempre 1 para header)
+        """
+        linha = ""
+        
+        # Pos 001: Tipo Registro
+        linha += "0"
+        
+        # Pos 002: Tipo Arquivo
+        linha += "1"
+        
+        # Pos 003-009: REMESSA (7 caracteres)
+        linha += "REMESSA"
+        
+        # Pos 010-011: Código Serviço
+        linha += "01"
+        
+        # Pos 012-026: COBRANCA (15 caracteres com espaços à direita)
+        linha += formatar_texto("COBRANCA", 15)
+        
+        # Pos 027-046: Código Originador (20 posições numéricas)
+        linha += formatar_numero(cod_originador, 20)
+        
+        # Pos 047-076: Nome Originador (30 posições texto)
+        linha += formatar_texto(nome_originador, 30)
+        
+        # Pos 077-079: Código Banco
+        linha += "611"
+        
+        # Pos 080-094: Nome Banco (15 posições)
+        linha += formatar_texto("PAULISTA S.A.", 15)
+        
+        # Pos 095-100: Data Gravação (DDMMAA)
+        linha += formatar_data(datetime.now())
+        
+        # Pos 101-108: Brancos (8 posições)
+        linha += " " * 8
+        
+        # Pos 109-110: Identificação MX
+        linha += "MX"
+        
+        # Pos 111-117: Sequencial do Arquivo (7 posições)
+        linha += formatar_numero(seq_arquivo, 7)
+        
+        # Pos 118-438: Brancos (321 posições)
+        linha += " " * 321
+        
+        # Pos 439-444: Sequencial do Registro (sempre 000001 para header)
+        linha += "000001"
+        
+        # Valida tamanho
+        if len(linha) != self.tamanho_registro:
+            raise ValueError(
+                f"Header com tamanho incorreto: {len(linha)} "
+                f"(esperado: {self.tamanho_registro})"
+            )
+        
+        return linha
+    
+    def gerar_detalhe(self, linha: pd.Series, sequencial_registro: int) -> str:
+        """
+        Gera um registro de detalhe (Tipo 1) do arquivo CNAB 444 posições
+        
+        Args:
+            linha: Linha do DataFrame com os dados do registro
+            sequencial_registro: Número sequencial do registro
+            
+        Returns:
+            String com 444 caracteres do detalhe
+            
+        Mapeamento de colunas:
+            - SEU_NUMERO → Pos 038-062 (25 pos texto)
+            - DATA_VENCIMENTO_AJUSTADA → Pos 121-126 (6 pos DDMMAA)
+            - VALOR_NOMINAL → Pos 127-139 (13 pos monetário)
+            - DATA_EMISSAO → Pos 151-156 (6 pos DDMMAA)
+            - DOC_SACADO → Pos 221-234 (14 pos numérico)
+            - NOME_SACADO → Pos 235-274 (40 pos texto)
+            - Endereço fixo → Pos 275-314 (40 pos texto)
+        """
+        # Inicializa linha com brancos (será preenchida posição por posição)
+        registro = [" "] * self.tamanho_registro
+        
+        # Pos 001: Tipo Registro Detalhe
+        registro[0] = "1"
+        
+        # Pos 002-037: Preencher com brancos ou conforme padrão (36 pos)
+        # Baseado no exemplo CNAB_Consignado2811.txt
+        for i in range(1, 20):  # Pos 2-20: brancos (19 pos)
+            registro[i] = " "
+        
+        # Pos 021-022: '02' (Coobrigação - conforme exemplo)
+        registro[20] = "0"
+        registro[21] = "2"
+        
+        # Pos 023-037: Zeros e campos fixos (15 pos) - baseado no exemplo
+        for i in range(22, 37):
+            registro[i] = "0"
+        
+        # Pos 038-062: SEU_NUMERO (25 posições texto)
+        seu_numero = ""
+        if hasattr(linha, 'SEU_NUMERO') and pd.notna(linha.SEU_NUMERO):
+            seu_numero = str(linha.SEU_NUMERO)
+        elif hasattr(linha, 'ID_RECEBIVEL') and pd.notna(linha.ID_RECEBIVEL):
+            seu_numero = str(linha.ID_RECEBIVEL)
+        
+        seu_numero_fmt = formatar_numero(seu_numero, 25)
+        for i, char in enumerate(seu_numero_fmt):
+            registro[37 + i] = char  # Pos 38-62
+        
+        # Pos 063-120: Campos diversos conforme exemplo (58 pos)
+        # Preenchimento baseado no arquivo exemplo
+        for i in range(62, 120):
+            registro[i] = "0"
+        
+        # Pos 121-126: DATA_VENCIMENTO_AJUSTADA (6 posições DDMMAA)
+        data_vencimento = None
+        if hasattr(linha, 'DATA_VENCIMENTO_AJUSTADA') and pd.notna(linha.DATA_VENCIMENTO_AJUSTADA):
+            data_vencimento = linha.DATA_VENCIMENTO_AJUSTADA
+        elif hasattr(linha, 'DATA_VENCIMENTO') and pd.notna(linha.DATA_VENCIMENTO):
+            data_vencimento = linha.DATA_VENCIMENTO
+        
+        data_venc_fmt = formatar_data(data_vencimento)
+        for i, char in enumerate(data_venc_fmt):
+            registro[120 + i] = char  # Pos 121-126
+        
+        # Pos 127-139: VALOR_NOMINAL (13 posições monetário)
+        valor_nominal = 0
+        if hasattr(linha, 'VALOR_NOMINAL') and pd.notna(linha.VALOR_NOMINAL):
+            valor_nominal = linha.VALOR_NOMINAL
+        
+        valor_fmt = formatar_dinheiro(valor_nominal, 13)
+        for i, char in enumerate(valor_fmt):
+            registro[126 + i] = char  # Pos 127-139
+        
+        # Pos 140-147: Campos diversos (8 pos)
+        for i in range(139, 147):
+            registro[i] = "0"
+        
+        # Pos 148-149: Espécie Título '04' (DS)
+        registro[147] = "0"
+        registro[148] = "4"
+        
+        # Pos 150: Campo adicional
+        registro[149] = " "
+        
+        # Pos 151-156: DATA_EMISSAO (6 posições DDMMAA)
+        data_emissao = None
+        if hasattr(linha, 'DATA_EMISSAO') and pd.notna(linha.DATA_EMISSAO):
+            data_emissao = linha.DATA_EMISSAO
+        
+        data_emis_fmt = formatar_data(data_emissao)
+        for i, char in enumerate(data_emis_fmt):
+            registro[150 + i] = char  # Pos 151-156
+        
+        # Pos 157-220: Campos diversos (64 pos)
+        for i in range(156, 220):
+            registro[i] = "0"
+        
+        # Pos 221-234: DOC_SACADO (14 posições numérico - CPF/CNPJ)
+        doc_sacado = ""
+        if hasattr(linha, 'DOC_SACADO') and pd.notna(linha.DOC_SACADO):
+            doc_sacado = str(linha.DOC_SACADO)
+        
+        doc_fmt = formatar_numero(doc_sacado, 14)
+        for i, char in enumerate(doc_fmt):
+            registro[220 + i] = char  # Pos 221-234
+        
+        # Pos 235-274: NOME_SACADO (40 posições texto)
+        nome_sacado = ""
+        if hasattr(linha, 'NOME_SACADO') and pd.notna(linha.NOME_SACADO):
+            nome_sacado = str(linha.NOME_SACADO)
+        
+        nome_fmt = formatar_texto(nome_sacado, 40)
+        for i, char in enumerate(nome_fmt):
+            registro[234 + i] = char  # Pos 235-274
+        
+        # Pos 275-314: ENDERECO (40 posições texto - fixo por enquanto)
+        endereco_fmt = formatar_texto("ENDERECO COMPLETO", 40)
+        for i, char in enumerate(endereco_fmt):
+            registro[274 + i] = char  # Pos 275-314
+        
+        # Pos 315-438: Campos diversos e brancos (124 pos)
+        for i in range(314, 438):
+            registro[i] = " "
+        
+        # Pos 439-444: Sequencial do Registro (6 posições)
+        seq_fmt = formatar_numero(sequencial_registro, 6)
+        for i, char in enumerate(seq_fmt):
+            registro[438 + i] = char  # Pos 439-444
+        
+        # Converte lista em string
+        linha_final = "".join(registro)
+        
+        # Valida tamanho
+        if len(linha_final) != self.tamanho_registro:
+            raise ValueError(
+                f"Detalhe com tamanho incorreto: {len(linha_final)} "
+                f"(esperado: {self.tamanho_registro})"
+            )
+        
+        return linha_final
+    
+    def gerar_trailer(self, total_registros: int) -> str:
+        """
+        Gera o registro trailer (Tipo 9) do arquivo CNAB 444 posições
+        
+        Args:
+            total_registros: Número total de registros no arquivo
+                            (incluindo header e trailer)
+            
+        Returns:
+            String com 444 caracteres do trailer
+            
+        Layout:
+            001-001: '9' (Tipo Registro Trailer)
+            002-007: Total de registros (6 pos numérico)
+            008-438: Brancos (431 pos)
+            439-444: Sequencial do Registro (6 pos numérico)
+        """
+        linha = ""
+        
+        # Pos 001: Tipo Registro
+        linha += "9"
+        
+        # Pos 002-007: Total de registros (6 posições)
+        linha += formatar_numero(total_registros, 6)
+        
+        # Pos 008-438: Brancos (431 posições)
+        linha += " " * 431
+        
+        # Pos 439-444: Sequencial do Registro (mesmo valor que total_registros)
+        linha += formatar_numero(total_registros, 6)
+        
+        # Valida tamanho
+        if len(linha) != self.tamanho_registro:
+            raise ValueError(
+                f"Trailer com tamanho incorreto: {len(linha)} "
+                f"(esperado: {self.tamanho_registro})"
+            )
+        
+        return linha
+    
+    def gerar_arquivo_completo(self, df: pd.DataFrame, nome_originador: str,
+                              cod_originador: str, seq_arquivo: int) -> str:
+        """
+        Gera o arquivo CNAB completo (Header + Detalhes + Trailer)
+        
+        Args:
+            df: DataFrame com os dados dos registros
+            nome_originador: Nome do originador
+            cod_originador: Código do originador
+            seq_arquivo: Número sequencial do arquivo
+            
+        Returns:
+            String com o conteúdo completo do arquivo CNAB
+        """
+        linhas = []
+        
+        # 1. Header
+        header = self.gerar_header(nome_originador, cod_originador, seq_arquivo)
+        linhas.append(header)
+        
+        # 2. Detalhes
+        for idx, row in df.iterrows():
+            sequencial = idx + 2  # +2 porque header é 1
+            detalhe = self.gerar_detalhe(row, sequencial)
+            linhas.append(detalhe)
+        
+        # 3. Trailer
+        total_registros = len(linhas) + 1  # +1 para o trailer
+        trailer = self.gerar_trailer(total_registros)
+        linhas.append(trailer)
+        
+        # Junta com quebra de linha padrão CNAB (\r\n)
+        return "\r\n".join(linhas)
 

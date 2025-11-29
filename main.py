@@ -41,12 +41,19 @@ def carregar_arquivo(arquivo):
 def main():
     """
     Função principal da aplicação Streamlit
+    Pode ser chamada diretamente ou importada por app.py
     """
-    st.set_page_config(
-        page_title="Gerador CNAB 444",
-        page_icon="🏦",
-        layout="wide"
-    )
+    # Apenas configura a página se estiver sendo executado diretamente
+    # (não quando importado por app.py que já configura)
+    try:
+        st.set_page_config(
+            page_title="Gerador CNAB 444",
+            page_icon="🏦",
+            layout="wide"
+        )
+    except st.errors.StreamlitAPIException:
+        # Página já foi configurada (importado por app.py)
+        pass
     
     # Título principal
     st.title("🏦 Gerador de Remessa CNAB 444 - CONCRETO")
