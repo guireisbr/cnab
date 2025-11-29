@@ -50,24 +50,74 @@ class GeradorCNAB:
         for i in range(1, 20):
             registro[i] = " "
         
-        registro[20] = "0"
-        registro[21] = "2"
+        coobrigacao = "02"
+        if hasattr(linha, 'COOBRIGACAO') and pd.notna(linha.COOBRIGACAO):
+            valor_coobrig = str(linha.COOBRIGACAO).upper()
+            if valor_coobrig in ['SIM', 'S', 'YES', 'Y']:
+                coobrigacao = "01"
+            elif valor_coobrig in ['NAO', 'N', 'NO', 'NÃO']:
+                coobrigacao = "02"
+            else:
+                coobrigacao = formatar_numero(valor_coobrig, 2)
+        registro[20] = coobrigacao[0]
+        registro[21] = coobrigacao[1]
         
-        for i in range(22, 37):
+        for i in range(22, 34):
             registro[i] = "0"
+        
+        registro[34] = "A"
+        registro[35] = "A"
+        
+        for i in range(36, 44):
+            registro[i] = "0"
+        
+        registro[44] = "0"
+        registro[45] = "4"
+        registro[46] = "0"
+        
+        registro[47] = "0"
+        registro[48] = "5"
         
         seu_numero = ""
         if hasattr(linha, 'SEU_NUMERO') and pd.notna(linha.SEU_NUMERO):
-            seu_numero = str(linha.SEU_NUMERO)
+            try:
+                seu_numero = str(int(float(linha.SEU_NUMERO)))
+            except:
+                seu_numero = str(linha.SEU_NUMERO)
         elif hasattr(linha, 'ID_RECEBIVEL') and pd.notna(linha.ID_RECEBIVEL):
-            seu_numero = str(linha.ID_RECEBIVEL)
+            seu_numero = str(int(linha.ID_RECEBIVEL))
         
-        seu_numero_fmt = formatar_numero(seu_numero, 25)
+        seu_numero_fmt = formatar_numero(seu_numero, 10)
         for i, char in enumerate(seu_numero_fmt):
-            registro[37 + i] = char
+            registro[49 + i] = char
         
-        for i in range(62, 120):
+        registro[59] = "2"
+        registro[60] = "0"
+        
+        for i in range(61, 87):
             registro[i] = "0"
+        
+        registro[87] = " "
+        
+        for i in range(88, 94):
+            registro[i] = "0"
+        
+        for i in range(94, 99):
+            registro[i] = " "
+        
+        registro[99] = "0"
+        registro[100] = " "
+        registro[101] = " "
+        
+        nosso_numero = ""
+        if hasattr(linha, 'DS_NOSSO_NUMERO') and pd.notna(linha.DS_NOSSO_NUMERO):
+            nosso_numero = str(linha.DS_NOSSO_NUMERO)
+        
+        nosso_num_fmt = formatar_numero(nosso_numero, 11)
+        for i, char in enumerate(nosso_num_fmt):
+            registro[102 + i] = char
+        
+        registro[113] = " "
         
         data_vencimento = None
         if hasattr(linha, 'DATA_VENCIMENTO_AJUSTADA') and pd.notna(linha.DATA_VENCIMENTO_AJUSTADA):
@@ -77,7 +127,7 @@ class GeradorCNAB:
         
         data_venc_fmt = formatar_data(data_vencimento)
         for i, char in enumerate(data_venc_fmt):
-            registro[120 + i] = char
+            registro[114 + i] = char
         
         valor_nominal = 0
         if hasattr(linha, 'VALOR_NOMINAL') and pd.notna(linha.VALOR_NOMINAL):
@@ -85,15 +135,12 @@ class GeradorCNAB:
         
         valor_fmt = formatar_dinheiro(valor_nominal, 13)
         for i, char in enumerate(valor_fmt):
-            registro[126 + i] = char
+            registro[120 + i] = char
         
-        for i in range(139, 147):
+        for i in range(133, 143):
             registro[i] = "0"
         
-        registro[147] = "0"
-        registro[148] = "4"
-        
-        registro[149] = " "
+        registro[143] = " "
         
         data_emissao = None
         if hasattr(linha, 'DATA_EMISSAO') and pd.notna(linha.DATA_EMISSAO):
@@ -101,9 +148,9 @@ class GeradorCNAB:
         
         data_emis_fmt = formatar_data(data_emissao)
         for i, char in enumerate(data_emis_fmt):
-            registro[150 + i] = char
+            registro[144 + i] = char
         
-        for i in range(156, 220):
+        for i in range(150, 220):
             registro[i] = "0"
         
         doc_sacado = ""
@@ -126,7 +173,28 @@ class GeradorCNAB:
         for i, char in enumerate(endereco_fmt):
             registro[274 + i] = char
         
-        for i in range(314, 438):
+        for i in range(314, 324):
+            registro[i] = " "
+        
+        nosso_num_fmt2 = formatar_numero(nosso_numero, 11)
+        for i, char in enumerate(nosso_num_fmt2):
+            registro[324 + i] = char
+        
+        for i in range(335, 343):
+            registro[i] = " "
+        
+        for i in range(343, 351):
+            registro[i] = "0"
+        
+        nome_cedente = "CAPITAL CONSIG SOCIEDADE DE CREDITO DIRE"
+        if hasattr(linha, 'DOC_CEDENTE') and pd.notna(linha.DOC_CEDENTE):
+            nome_cedente = "CAPITAL CONSIG SOCIEDADE DE CREDITO DIRE"
+        
+        cedente_fmt = formatar_texto(nome_cedente, 40)
+        for i, char in enumerate(cedente_fmt):
+            registro[351 + i] = char
+        
+        for i in range(391, 438):
             registro[i] = " "
         
         seq_fmt = formatar_numero(sequencial_registro, 6)
