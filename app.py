@@ -98,18 +98,36 @@ def main():
         st.markdown("---")
         st.markdown("### ⚙️ Configurações da Remessa")
         
-        nome_originador = st.text_input(
-            "📝 Nome Originador",
-            value="BANCO PAULISTA",
-            help="Nome da empresa/banco originador (até 30 caracteres)",
-            max_chars=30
-        )
-        
         cod_originador = st.text_input(
             "🔢 Código Originador",
-            value="20250158479927000136",
+            value="",
             help="Código numérico do originador (até 20 dígitos)",
-            max_chars=20
+            max_chars=20,
+            placeholder="Ex: 20250158479927000136"
+        )
+        
+        razao_social = st.text_input(
+            "📝 Razão Social",
+            value="",
+            help="CNPJ + Nome (até 30 caracteres). Ex: 58479927000136BANCO PAULISTA",
+            max_chars=30,
+            placeholder="Ex: 58479927000136BANCO PAULISTA"
+        )
+        
+        numero_banco = st.text_input(
+            "🏦 Número do Banco",
+            value="",
+            help="Código numérico do banco (3 dígitos). Ex: 611",
+            max_chars=3,
+            placeholder="Ex: 611"
+        )
+        
+        nome_banco = st.text_input(
+            "🏛️ Nome do Banco",
+            value="",
+            help="Nome do banco (até 15 caracteres)",
+            max_chars=15,
+            placeholder="Ex: PAULISTA S.A."
         )
         
         seq_arquivo = st.number_input(
@@ -207,12 +225,20 @@ def main():
                 )
             
             if gerar_cnab:
-                if not nome_originador or not nome_originador.strip():
-                    st.error("❌ Por favor, informe o Nome do Originador na sidebar!")
-                    st.stop()
-                
                 if not cod_originador or not cod_originador.strip():
                     st.error("❌ Por favor, informe o Código do Originador na sidebar!")
+                    st.stop()
+                
+                if not razao_social or not razao_social.strip():
+                    st.error("❌ Por favor, informe a Razão Social na sidebar!")
+                    st.stop()
+                
+                if not numero_banco or not numero_banco.strip():
+                    st.error("❌ Por favor, informe o Número do Banco na sidebar!")
+                    st.stop()
+                
+                if not nome_banco or not nome_banco.strip():
+                    st.error("❌ Por favor, informe o Nome do Banco na sidebar!")
                     st.stop()
                 
                 try:
@@ -220,8 +246,10 @@ def main():
                         gerador = GeradorCNAB()
                         
                         header = gerador.gerar_header(
-                            nome_originador=nome_originador,
                             cod_originador=cod_originador,
+                            razao_social=razao_social,
+                            numero_banco=numero_banco,
+                            nome_banco=nome_banco,
                             seq_arquivo=seq_arquivo
                         )
                         
@@ -309,7 +337,8 @@ def main():
                             with info_col2:
                                 st.write(f"**Data de geração:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
                                 st.write(f"**Código Originador:** {cod_originador}")
-                                st.write(f"**Nome Originador:** {nome_originador}")
+                                st.write(f"**Razão Social:** {razao_social}")
+                                st.write(f"**Banco:** {numero_banco} - {nome_banco}")
                                 st.write(f"**Sequencial:** {seq_arquivo}")
                                 st.write(f"**Total de registros:** {total_registros}")
                 

@@ -13,8 +13,8 @@ class GeradorCNAB:
         self.tamanho_registro = 444
         self.dados = None
     
-    def gerar_header(self, nome_originador: str, cod_originador: str, 
-                     seq_arquivo: int) -> str:
+    def gerar_header(self, cod_originador: str, razao_social: str, 
+                     numero_banco: str, nome_banco: str, seq_arquivo: int) -> str:
         
         linha = ""
         linha += "0"
@@ -23,9 +23,9 @@ class GeradorCNAB:
         linha += "01"
         linha += formatar_texto("COBRANCA", 15)
         linha += formatar_numero(cod_originador, 20)
-        linha += formatar_texto(nome_originador, 30)
-        linha += "611"
-        linha += formatar_texto("PAULISTA S.A.", 15)
+        linha += formatar_texto(razao_social, 30)
+        linha += formatar_numero(numero_banco, 3)
+        linha += formatar_texto(nome_banco, 15)
         linha += formatar_data(datetime.now())
         linha += " " * 8
         linha += "MX"
@@ -186,15 +186,24 @@ class GeradorCNAB:
         for i in range(343, 351):
             registro[i] = "0"
         
-        nome_cedente = "CAPITAL CONSIG SOCIEDADE DE CREDITO DIRE"
-        if hasattr(linha, 'DOC_CEDENTE') and pd.notna(linha.DOC_CEDENTE):
-            nome_cedente = "CAPITAL CONSIG SOCIEDADE DE CREDITO DIRE"
+        nome_cedente = ""
+        if hasattr(linha, 'NOME_CEDENTE') and pd.notna(linha.NOME_CEDENTE):
+            nome_cedente = str(linha.NOME_CEDENTE)
         
         cedente_fmt = formatar_texto(nome_cedente, 40)
         for i, char in enumerate(cedente_fmt):
             registro[351 + i] = char
         
-        for i in range(391, 438):
+        # Documento do Cedente (coluna G)
+        doc_cedente = ""
+        if hasattr(linha, 'DOC_CEDENTE') and pd.notna(linha.DOC_CEDENTE):
+            doc_cedente = str(linha.DOC_CEDENTE)
+        
+        doc_cedente_fmt = formatar_numero(doc_cedente, 14)
+        for i, char in enumerate(doc_cedente_fmt):
+            registro[391 + i] = char
+        
+        for i in range(405, 438):
             registro[i] = " "
         
         seq_fmt = formatar_numero(sequencial_registro, 6)
@@ -226,12 +235,14 @@ class GeradorCNAB:
         
         return linha
     
-    def gerar_arquivo_completo(self, df: pd.DataFrame, nome_originador: str,
-                              cod_originador: str, seq_arquivo: int) -> str:
+    def gerar_arquivo_completo(self, df: pd.DataFrame, cod_originador: str,
+                              razao_social: str, numero_banco: str, 
+                              nome_banco: str, seq_arquivo: int) -> str:
         
         linhas = []
         
-        header = self.gerar_header(nome_originador, cod_originador, seq_arquivo)
+        header = self.gerar_header(cod_originador, razao_social, numero_banco, 
+                                   nome_banco, seq_arquivo)
         linhas.append(header)
         
         for idx, row in df.iterrows():
