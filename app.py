@@ -80,7 +80,7 @@ def main():
         page_title="Sistema CNAB - CONCRETO",
         page_icon="🔐",
         layout="wide",
-        initial_sidebar_state="collapsed"
+        initial_sidebar_state="expanded"
     )
     
     check_password()
@@ -137,6 +137,13 @@ def main():
             value=1,
             step=1,
             help="Número sequencial do arquivo de remessa"
+        )
+        
+        coobrigacao = st.selectbox(
+            "🤝 Coobrigação",
+            options=["02", "01"],
+            format_func=lambda x: "02 - Sem Coobrigação" if x == "02" else "01 - Com Coobrigação",
+            help="Indicador de coobrigação para todos os registros"
         )
         
         st.markdown("---")
@@ -264,7 +271,7 @@ def main():
                         for idx, row in df.iterrows():
                             try:
                                 sequencial_registro = idx + 2
-                                detalhe = gerador.gerar_detalhe(row, sequencial_registro)
+                                detalhe = gerador.gerar_detalhe(row, sequencial_registro, coobrigacao)
                                 linhas.append(detalhe)
                                 total_detalhes += 1
                                 
@@ -340,6 +347,7 @@ def main():
                                 st.write(f"**Razão Social:** {razao_social}")
                                 st.write(f"**Banco:** {numero_banco} - {nome_banco}")
                                 st.write(f"**Sequencial:** {seq_arquivo}")
+                                st.write(f"**Coobrigação:** {coobrigacao}")
                                 st.write(f"**Total de registros:** {total_registros}")
                 
                 except Exception as e:
