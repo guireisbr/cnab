@@ -150,7 +150,7 @@ def main():
             unsafe_allow_html=True
         )
     
-    st.title("🏦 Gerador de Remessa CNAB 444 - CONCRETO")
+    st.title("🏦 Gerador de Remessa CNAB 444 - CONCRETO FIDC")
     st.markdown("### Sistema de Geração de Arquivos CNAB")
     st.markdown("---")
     
@@ -361,7 +361,7 @@ def main():
     st.markdown(
         """
         <div style='text-align: center; color: gray;'>
-            <small>Gerador de Remessa CNAB 444 - CONCRETO | Desenvolvido com Streamlit</small>
+            <small>Gerador de Remessa CNAB 444 - CONCRETO FIDC | Desenvolvido com Streamlit</small>
         </div>
         """,
         unsafe_allow_html=True

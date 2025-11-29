@@ -1,4 +1,4 @@
-# Sistema CNAB 444 - CONCRETO
+# Sistema CNAB 444 - CONCRETO FIDC
 
 Sistema web para geração de arquivos CNAB no padrão 444 caracteres com autenticação.
 
@@ -71,7 +71,7 @@ O arquivo Excel/CSV deve conter as seguintes colunas:
 
 ## Tecnologias
 
-- **Python 3.13+**
+- **Python 3.11+**
 - **Streamlit** - Interface web
 - **Pandas** - Processamento de dados
 - **openpyxl** - Leitura de arquivos Excel
@@ -83,36 +83,6 @@ O arquivo Excel/CSV deve conter as seguintes colunas:
 python test_final.py
 ```
 
-## Configuração de Senha
-
-Para alterar a senha de acesso, edite o arquivo `.streamlit/secrets.toml`:
-
-```toml
-access_password = "sua_senha_aqui"
-```
-
-**⚠️ IMPORTANTE:** O arquivo `.streamlit/secrets.toml` não deve ser commitado no Git!
-
-## Uso via Código Python
-
-```python
-import pandas as pd
-from cnab_engine import GeradorCNAB
-
-gerador = GeradorCNAB()
-df = pd.read_excel('arquivo.xlsx')
-
-arquivo_cnab = gerador.gerar_arquivo_completo(
-    df=df,
-    nome_originador="BANCO PAULISTA",
-    cod_originador="20250158479927000136",
-    seq_arquivo=1
-)
-
-with open('remessa.REM', 'w', encoding='latin-1') as f:
-    f.write(arquivo_cnab)
-```
-
 ## Licença
 
-CONCRETO © 2025 - Todos os direitos reservados
+GUIREISBR.DEV © 2025 - Todos os direitos reservados
