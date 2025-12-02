@@ -81,7 +81,7 @@ class GeradorCNAB:
         return linha_final
     
     def gerar_detalhe(self, linha: pd.Series, sequencial_registro: int, 
-                     coobrigacao: str = "02") -> str:
+                     coobrigacao: str = "02", tipo_baixa: str = "TOTAL") -> str:
         
         registro = [" "] * self.tamanho_registro
         
@@ -154,8 +154,12 @@ class GeradorCNAB:
         for i in range(106, 108):
             registro[i] = " "
         
-        registro[108] = "7"
-        registro[109] = "7"
+        if tipo_baixa == "TOTAL":
+            registro[108] = "7"
+            registro[109] = "7"
+        else:  # PARCIAL
+            registro[108] = "1"
+            registro[109] = "4"
         
         nu_documento = ""
         if hasattr(linha, 'NU_DOCUMENTO') and pd.notna(linha.NU_DOCUMENTO):
@@ -331,7 +335,7 @@ class GeradorCNAB:
     def gerar_arquivo_completo(self, df: pd.DataFrame, cod_originador: str,
                               razao_social: str, numero_banco: str, 
                               nome_banco: str, seq_arquivo: int,
-                              coobrigacao: str = "02") -> str:
+                              coobrigacao: str = "02", tipo_baixa: str = "TOTAL") -> str:
         
         linhas = []
         
@@ -341,7 +345,7 @@ class GeradorCNAB:
         
         for idx, row in df.iterrows():
             sequencial = idx + 2
-            detalhe = self.gerar_detalhe(row, sequencial, coobrigacao)
+            detalhe = self.gerar_detalhe(row, sequencial, coobrigacao, tipo_baixa)
             linhas.append(detalhe)
         
         total_registros = len(linhas) + 1

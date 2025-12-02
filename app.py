@@ -146,6 +146,13 @@ def main():
             help="Indicador de coobrigação para todos os registros"
         )
         
+        tipo_baixa = st.selectbox(
+            "📋 Tipo de Baixa",
+            options=["TOTAL", "PARCIAL"],
+            format_func=lambda x: "Baixa Total" if x == "TOTAL" else "Baixa Parcial",
+            help="Tipo de baixa: Total (7/7) ou Parcial (1/4)"
+        )
+        
         st.markdown("---")
         st.markdown(
             """
@@ -271,7 +278,7 @@ def main():
                         for idx, row in df.iterrows():
                             try:
                                 sequencial_registro = idx + 2
-                                detalhe = gerador.gerar_detalhe(row, sequencial_registro, coobrigacao)
+                                detalhe = gerador.gerar_detalhe(row, sequencial_registro, coobrigacao, tipo_baixa)
                                 linhas.append(detalhe)
                                 total_detalhes += 1
                                 
@@ -348,6 +355,7 @@ def main():
                                 st.write(f"**Banco:** {numero_banco} - {nome_banco}")
                                 st.write(f"**Sequencial:** {seq_arquivo}")
                                 st.write(f"**Coobrigação:** {coobrigacao}")
+                                st.write(f"**Tipo de Baixa:** {'Baixa Total' if tipo_baixa == 'TOTAL' else 'Baixa Parcial'}")
                                 st.write(f"**Total de registros:** {total_registros}")
                 
                 except Exception as e:
