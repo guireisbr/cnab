@@ -103,7 +103,7 @@ def main():
             value="",
             help="Código numérico do originador (até 20 dígitos)",
             max_chars=20,
-            placeholder="Ex: 20250158479927000136"
+            placeholder="Ex: 202501"
         )
         
         razao_social = st.text_input(
